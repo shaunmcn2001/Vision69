@@ -31,15 +31,15 @@ pytest -q
 The repository includes a `Procfile` for Render:
 
 ```procfile
-web: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
 Push the repository to GitHub and create a new Web Service on [Render](https://render.com/) connected to your repo. Render automatically reads the `Procfile` and starts the service with the command shown above.
 
-If Render prompts you for a start command, use the following **without** the `web:` prefix:
+If Render asks for a start command, use the exact line from the `Procfile`:
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Including the `web:` prefix in the start command will cause an error like `web: command not found` during deployment.
+Including a `web:` prefix in the start command will cause an error like `web: command not found` during deployment.

@@ -34,4 +34,12 @@ The repository includes a `Procfile` for Render:
 web: uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Push the repository to GitHub and create a new Web Service on [Render](https://render.com/) connected to your repo. Render will install the dependencies and start the app using the command above.
+Push the repository to GitHub and create a new Web Service on [Render](https://render.com/) connected to your repo. Render automatically reads the `Procfile` and starts the service with the command shown above.
+
+If Render prompts you for a start command, use the following **without** the `web:` prefix:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+Including the `web:` prefix in the start command will cause an error like `web: command not found` during deployment.

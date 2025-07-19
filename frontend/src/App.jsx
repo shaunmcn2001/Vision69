@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css'; // you only need to import this once
+import { GeoJSON } from 'react-leaflet';
+import ParcelMap from './ParcelMap.jsx';
 import './App.css';
 
 function App() {
@@ -64,21 +64,11 @@ function App() {
           </div>
         )}
       </div>
-      <MapContainer
-        className="map"
-        center={[-27.467, 153.028]}
-        zoom={10}
-        style={{ height: '100vh', width: '100%' }}
-      >
-        {/* ─────── BASEMAP ─────── */}
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
+      <ParcelMap>
         {features.length > 0 && (
           <GeoJSON data={{ type: 'FeatureCollection', features }} />
         )}
-      </MapContainer>
+      </ParcelMap>
     </div>
   );
 }

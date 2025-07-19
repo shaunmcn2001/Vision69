@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css'; // you only need to import this once
 import './App.css';
 
 function App() {
@@ -67,10 +68,13 @@ function App() {
         className="map"
         center={[-27.467, 153.028]}
         zoom={10}
-        style={{ height: '100vh' }}
+        style={{ height: '100vh', width: '100%' }}
       >
-        {/* use https tiles to avoid mixed content issues */}
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        {/* ─────── BASEMAP ─────── */}
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+        />
         {features.length > 0 && (
           <GeoJSON data={{ type: 'FeatureCollection', features }} />
         )}

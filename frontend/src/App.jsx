@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
 import './App.css';
 
 function App() {
@@ -70,6 +69,7 @@ function App() {
         zoom={10}
         style={{ height: '100vh' }}
       >
+        {/* use https tiles to avoid mixed content issues */}
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {features.length > 0 && (
           <GeoJSON data={{ type: 'FeatureCollection', features }} />

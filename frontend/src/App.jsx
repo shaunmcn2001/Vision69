@@ -3,13 +3,15 @@ import { GeoJSON } from 'react-leaflet';
 import ParcelMap from './ParcelMap.jsx';
 import './App.css';
 
+const API_BASE = 'https://vision-0j3n.onrender.com';
+
 function App() {
   const [bulk, setBulk] = useState('');
   const [features, setFeatures] = useState([]);
   const [selected, setSelected] = useState({});
 
   const handleSearch = async () => {
-    const resp = await fetch('/api/search', {
+    const resp = await fetch(`${API_BASE}/api/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ inputs: bulk.split('\n') })
@@ -27,7 +29,7 @@ function App() {
 
   const download = async (type) => {
     const sel = features.filter((_, i) => selected[i]);
-    const resp = await fetch(`/api/download/${type}`, {
+    const resp = await fetch(`${API_BASE}/api/download/${type}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ features: sel.length ? sel : features })

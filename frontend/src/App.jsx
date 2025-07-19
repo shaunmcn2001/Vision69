@@ -1,28 +1,17 @@
 import { useState } from 'react';
 import { GeoJSON } from 'react-leaflet';
 import ParcelMap from './ParcelMap.jsx';
+import SearchPanel from './SearchPanel.jsx';
+import { API_BASE } from './api.js';
 import './App.css';
 
-// Back-end base URL can be injected at build time via VITE_API_BASE.
-// If not provided, default to the current origin.
-const API_BASE = import.meta.env.VITE_API_BASE || '';
-
 function App() {
-  const [bulk, setBulk] = useState('');
   const [features, setFeatures] = useState([]);
   const [selected, setSelected] = useState({});
 
-  const handleSearch = async () => {
-    const resp = await fetch(`${API_BASE}/api/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inputs: bulk.split('\n') })
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      setFeatures(data.features || []);
-      setSelected({});
-    }
+  const handleResults = (list) => {
+    setFeatures(list);
+    setSelected({});
   };
 
   const toggle = (idx) => {
@@ -49,25 +38,13 @@ function App() {
 
   return (
     <div className="app">
-      <div className="sidebar">
-        <h2>Search Parcels</h2>
-        <textarea value={bulk} onChange={(e) => setBulk(e.target.value)} placeholder="Lot/Plan each line" />
-        <button onClick={handleSearch}>Search</button>
-        <div className="results">
-          {features.map((f, i) => (
-            <label key={i}>
-              <input type="checkbox" checked={!!selected[i]} onChange={() => toggle(i)} />
-              {f.properties.lot || f.properties.lotnumber} {f.properties.plan || f.properties.planlabel}
-            </label>
-          ))}
-        </div>
-        {features.length > 0 && (
-          <div className="downloads">
-            <button onClick={() => download('kml')}>Download KML</button>
-            <button onClick={() => download('shp')}>Download SHP</button>
-          </div>
-        )}
-      </div>
+      <SearchPanel
+        onResults={handleResults}
+        features={features}
+        selected={selected}
+        toggle={toggle}
+        download={download}
+      />
       <ParcelMap>
         {features.length > 0 && (
           <GeoJSON data={{ type: 'FeatureCollection', features }} />

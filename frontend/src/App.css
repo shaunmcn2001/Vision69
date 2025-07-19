@@ -7,8 +7,8 @@
   width: 300px;
   padding: 1rem;
   overflow-y: auto;
-  background: #f8f8f8;
-  border-right: 1px solid #ccc;
+  background: #fafafa;
+  border-right: 1px solid #eee;
 }
 
 .sidebar textarea {
@@ -26,6 +26,10 @@
   margin-top: 0.25rem;
 }
 
+/* Ensure the Leaflet container always has height */
 .map {
   flex: 1;
+  height: 100vh;          /* full viewport height */
+  border-radius: 8px;     /* subtle rounding */
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
 }

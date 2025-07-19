@@ -64,12 +64,17 @@ function App() {
           </div>
         )}
       </div>
-      <div className="map">
-        <MapContainer center={[-23.5, 143]} zoom={5} style={{ height: '100%', width: '100%' }}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {features.length > 0 && <GeoJSON data={{ type: 'FeatureCollection', features }} />}
-        </MapContainer>
-      </div>
+      <MapContainer
+        className="map"
+        center={[-27.467, 153.028]}
+        zoom={10}
+        style={{ height: '100vh' }}
+      >
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        {features.length > 0 && (
+          <GeoJSON data={{ type: 'FeatureCollection', features }} />
+        )}
+      </MapContainer>
     </div>
   );
 }

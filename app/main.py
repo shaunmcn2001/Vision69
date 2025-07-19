@@ -7,6 +7,12 @@ from typing import List
 
 from kml_utils import generate_kml, generate_shapefile, get_bounds
 
+# Full REST endpoint – now returns features
+QLD_PARCEL_URL = (
+    "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/"
+    "PlanningCadastre/LandParcelPropertyFramework/MapServer/4/query"
+)
+
 app = FastAPI()
 
 # serve React build
@@ -66,8 +72,13 @@ async def search(body: SearchBody):
                 continue
             lot_str = match.group(1)
             plan_str = match.group(2)
-            url = "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/PlanningCadastre/LandParcelPropertyFramework/MapServer/4/query"
-            params = {"where": f"lot='{lot_str}' AND plan='{plan_str}'", "outFields": "lot,plan,lotplan,locality", "outSR": "4326", "f": "geoJSON"}
+            url = QLD_PARCEL_URL
+            lotplan = f"{lot_str}{plan_str}"
+            params = {
+                "f": "geojson",
+                "where": f"lotplan='{lotplan}'",
+                "outFields": "lot,plan,parcel_area,desc_,locality",
+            }
             try:
                 res = requests.get(url, params=params, timeout=10)
                 data = res.json()

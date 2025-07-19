@@ -1,13 +1,15 @@
 # Parcel Viewer
 
-This project contains a small FastAPI application for viewing cadastral parcels. The frontend uses Bootstrap and Leaflet served via Jinja2 templates.
+This project contains a small FastAPI backend with a React frontend. The React app uses Leaflet to display parcels on a map and communicates with the FastAPI API for searching and downloading data.
 
 ## Setup
 
-Install the required packages:
+Install the required Python packages and build the frontend:
 
 ```bash
 pip install -r requirements.txt
+npm --prefix frontend install
+npm --prefix frontend run build
 ```
 
 ## Running the app locally
@@ -34,7 +36,7 @@ The repository includes a `Procfile` for Render:
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Push the repository to GitHub and create a new Web Service on [Render](https://render.com/) connected to your repo. Render automatically reads the `Procfile` and starts the service with the command shown above.
+Push the repository to GitHub and create a new Web Service on [Render](https://render.com/) connected to your repo. Render automatically reads the `Procfile` and starts the service with the command shown above. Make sure the frontend is built (using `npm run build`) before deployment so the `frontend/dist` directory exists.
 
 If Render asks for a start command, use the exact line from the `Procfile`:
 

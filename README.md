@@ -45,3 +45,14 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
 Including a `web:` prefix in the start command will cause an error like `web: command not found` during deployment.
+
+## Troubleshooting the Map
+
+If the map shows a grey box or fails to render, check the following common issues:
+
+| Symptom | Typical root cause | One-line fix |
+|---------|-------------------|--------------|
+| Grey box, no errors | Tile layer wasn’t added or was removed during a refactor | Add a `<TileLayer>` inside `<MapContainer>` |
+| Grey box with `Blocked: mixed-content` in the browser console | Tile URL starts with `http://` while the site is served over `https://` | Use an `https://` tile provider |
+| Grey box with `leaflet.css not found` in the console | Leaflet CSS not imported | `import 'leaflet/dist/leaflet.css';` at the top of your entry file |
+| Whole page scrolls, map never appears | A parent element has `height: 0` | Give the map (or its flex parent) an explicit height, e.g. `100vh` |

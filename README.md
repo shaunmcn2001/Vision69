@@ -12,6 +12,16 @@ npm --prefix frontend install
 npm --prefix frontend run build
 ```
 
+The build step reads the `VITE_API_BASE` environment variable to know which
+back‐end URL to call. Set it to your Render back end URL, e.g.
+
+```bash
+VITE_API_BASE=https://my-backend.onrender.com npm --prefix frontend run build
+```
+
+The FastAPI service expects the front-end origin in the `VISION_FRONTEND`
+environment variable so CORS is configured correctly.
+
 ## Running the app locally
 
 Start the server with Uvicorn and open your browser at <http://localhost:8000>:

@@ -1,6 +1,8 @@
+import os
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests, re
 from typing import List
@@ -14,6 +16,21 @@ QLD_PARCEL_URL = (
 )
 
 app = FastAPI()
+
+# Allow the React frontend to access this API when served from a different host
+frontend_origin = os.getenv("VISION_FRONTEND")
+if frontend_origin:
+    origins = [frontend_origin]
+else:
+    origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # serve React build
 app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")

@@ -3,7 +3,9 @@ import { GeoJSON } from 'react-leaflet';
 import ParcelMap from './ParcelMap.jsx';
 import './App.css';
 
-const API_BASE = 'https://vision-0j3n.onrender.com';
+// Back-end base URL can be injected at build time via VITE_API_BASE.
+// If not provided, default to the current origin.
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 function App() {
   const [bulk, setBulk] = useState('');

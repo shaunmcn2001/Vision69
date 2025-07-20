@@ -1,22 +1,24 @@
+from __future__ import annotations
+
 import os
 from typing import List
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .constants import NSW_PARCEL_URL, QLD_PARCEL_URL
-from .utils import parse_user_input  # ← add dot
-from kml_utils import generate_kml, generate_shapefile
+from .utils import parse_user_input
+from kml_utils import generate_kml, generate_shapefile   # top-level module
 
 app = FastAPI(title="Vision Parcel API")
 
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------#
 # CORS
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------#
 frontend_origin = os.getenv("VISION_FRONTEND") or "*"
 app.add_middleware(
     CORSMiddleware,
@@ -25,27 +27,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
-# Serve React build & static assets (Approach B: single-service deployment)
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------#
+# Serve React build & other static assets (single-service deployment)
+# ---------------------------------------------------------------------------#
 app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/")
-async def serve_spa():
-    """Return the bundled React index.html."""
+async def serve_spa() -> FileResponse:
+    """Return the bundled React index.html (SPA entry point)."""
     return FileResponse("frontend/dist/index.html")
 
 
 @app.get("/ping")
-async def ping():
+async def ping() -> dict[str, bool]:
     return {"pong": True}
 
 
-# ---------------------------------------------------------------------------
-# Request / response models
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------#
+# Pydantic models
+# ---------------------------------------------------------------------------#
 class SearchBody(BaseModel):
     inputs: List[str]
 
@@ -54,13 +56,11 @@ class FeaturesBody(BaseModel):
     features: List[dict]
 
 
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------#
 # Helpers
-# ---------------------------------------------------------------------------
-
-
-async def fetch_geojson(url: str, params: dict) -> list[dict]:
-    """Hit ArcGIS, return list of features (may be empty)."""
+# ---------------------------------------------------------------------------#
+async def _fetch_geojson(url: str, params: dict) -> list[dict]:
+    """Query ArcGIS layer, return list of GeoJSON features (may be empty)."""
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.get(url, params=params)
         r.raise_for_status()
@@ -69,17 +69,19 @@ async def fetch_geojson(url: str, params: dict) -> list[dict]:
 
 
 def _region_from_features(flist: list[dict]) -> str:
-    """Heuristic: if feature has 'lot', we got QLD; else NSW."""
+    """Infer region from the first feature's attribute schema."""
     return "QLD" if any("lot" in f.get("properties", {}) for f in flist) else "NSW"
 
 
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------#
 # Routes
-# ---------------------------------------------------------------------------
-
-
+# ---------------------------------------------------------------------------#
 @app.post("/api/search")
 async def search(body: SearchBody):
+    """
+    Accepts:  {"inputs": ["3/RP123456", "43/DP756474", ...]}
+    Returns:  {"features": [...], "regions": ["QLD", "NSW", ...]}
+    """
     features, regions = [], []
 
     for raw in body.inputs:
@@ -88,13 +90,17 @@ async def search(body: SearchBody):
             continue
 
         if region == "NSW":
-            where = [f"lotnumber='{lot}'", f"plannumber={plan.lstrip('DP')}"]
+            # Plan label already includes "DP"
+            where = [
+                f"lotnumber = '{lot}'",
+                f"planlabel = '{plan}'",
+            ]
             if section is None:
-                where.append("(sectionnumber IS NULL OR sectionnumber='')")
+                where.append("(sectionnumber IS NULL OR sectionnumber = '')")
             else:
-                where.append(f"sectionnumber='{section}'")
+                where.append(f"sectionnumber = '{section}'")
 
-            feats = await fetch_geojson(
+            feats = await _fetch_geojson(
                 NSW_PARCEL_URL,
                 {
                     "where": " AND ".join(where),
@@ -104,13 +110,12 @@ async def search(body: SearchBody):
                 },
             )
         else:  # QLD
-            feats = await fetch_geojson(
+            feats = await _fetch_geojson(
                 QLD_PARCEL_URL,
                 {
-                    "where": f"lotplan='{lot}{plan}'",
-                    # The QLD endpoint rejects unknown field names so only
-                    # request a small set of commonly available ones.
+                    "where": f"lotplan = '{lot}{plan}'",
                     "outFields": "lot,plan,locality",
+                    "outSR": "4326",
                     "f": "geoJSON",
                 },
             )

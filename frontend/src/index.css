@@ -1,3 +1,13 @@
+
+/* frontend/src/index.css  */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── optional: keep your own rules AFTER the directives ─── */
+/* .map  { height: 100vh; }   etc. */
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

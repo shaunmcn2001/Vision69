@@ -3,8 +3,9 @@ import { XMarkIcon } from '@heroicons/react/24/solid';
 export default function ResultDrawer({ open, onClose, children }) {
   return (
     <div
-      className={`fixed inset-y-0 left-16 w-64 sm:w-72 bg-white dark:bg-gray-900
-                  border-r dark:border-gray-700 transition-transform duration-300
+      className={`fixed inset-y-0 left-16 w-64 sm:w-72 z-50
+                  bg-white dark:bg-gray-900 border-r dark:border-gray-700
+                  transition-transform duration-300
                   ${open ? 'translate-x-0' : '-translate-x-full'}`}
     >
       <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">

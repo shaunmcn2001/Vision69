@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import ParcelMap from './ParcelMap.jsx';
-import SearchPanel from './SearchPanel.jsx';
+import NavBar       from './NavBar.jsx';
+import ResultDrawer from './ResultDrawer.jsx';
+import ParcelMap    from './ParcelMap.jsx';
+import SearchPanel  from './SearchPanel.jsx';
 import { API_BASE } from './api.js';
-import './App.css';                       // global dark theme
+import './index.css';          // Tailwind global
 
 export default function App() {
   /* ───── parcels & styling state ───── */
@@ -25,9 +27,8 @@ export default function App() {
     localStorage.setItem('parcelStyle', JSON.stringify(style));
   }, [style]);
 
-  /* ───── sidebar open / closed ───── */
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const toggleSidebar = () => setSidebarOpen((o) => !o);
+  /* ───── drawer open / closed ───── */
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   /* ───── helpers ───── */
   const toggleRow = (idx) =>
@@ -62,14 +63,10 @@ export default function App() {
 
   /* ───── UI ───── */
   return (
-    <div className={`app ${sidebarOpen ? '' : 'sidebar-closed'}`}>
-      {/* toggle button – always visible */}
-      <button className="toggle-btn" onClick={toggleSidebar} title="Search">
-        🔍
-      </button>
+    <div className="flex h-screen dark:bg-gray-800">
+      <NavBar onToggleSearch={() => setDrawerOpen((o) => !o)} />
 
-      {/* sidebar (hidden when closed) */}
-      {sidebarOpen && (
+      <ResultDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <SearchPanel
           onResults={handleResults}
           features={features}
@@ -78,12 +75,13 @@ export default function App() {
           download={download}
           style={style}
           setStyle={setStyle}
-          onClose={toggleSidebar}
+          onClose={() => setDrawerOpen(false)}
         />
-      )}
+      </ResultDrawer>
 
-      {/* map */}
-      <ParcelMap features={features} style={style} />
+      <main className="flex-1">
+        <ParcelMap features={features} style={style} />
+      </main>
     </div>
   );
 }

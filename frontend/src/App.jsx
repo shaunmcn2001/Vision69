@@ -1,70 +1,71 @@
-import { useState } from 'react';
-import { GeoJSON } from 'react-leaflet';
-
+import { useState, useMemo } from 'react';
 import ParcelMap from './ParcelMap.jsx';
 import SearchPanel from './SearchPanel.jsx';
 import { API_BASE } from './api.js';
 import './App.css';
 
+/**
+ * Root layout: sidebar (search + style + downloads) + map.
+ */
 export default function App() {
-  const [features, setFeatures] = useState([]);
-  const [selected, setSelected] = useState({});
+  const [features, setFeatures] = useState([]);       // GeoJSON Feature[]
+  const [selected, setSelected] = useState({});       // {rowIndex:boolean}
+  const [style, setStyle] = useState({
+    fill: '#FF0000',
+    outline: '#000000',
+    opacity: 0.5,
+    weight: 2,
+  });
 
-  /* Handle search results coming back from <SearchPanel> */
+  // toggle row selection
+  const toggle = (idx) =>
+    setSelected((s) => ({ ...s, [idx]: !s[idx] }));
+
+  // reset selection when new results arrive
   const handleResults = (list) => {
     setFeatures(list);
     setSelected({});
   };
 
-  /* Toggle a row in the sidebar list */
-  const toggle = (idx) =>
-    setSelected((s) => ({ ...s, [idx]: !s[idx] }));
+  // derived array of selected features (fallback to all)
+  const chosen = useMemo(() => {
+    const picked = features.filter((_, i) => selected[i]);
+    return picked.length ? picked : features;
+  }, [features, selected]);
 
-  /* Download either KML or SHP */
+  // download helper
   const download = async (type) => {
-    const sel = features.filter((_, i) => selected[i]);
+    if (!features.length) return;
     const resp = await fetch(`${API_BASE}/api/download/${type}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ features: sel.length ? sel : features }),
+      body: JSON.stringify({ features: chosen }),
     });
-    if (resp.ok) {
-      const blob = await resp.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = type === 'kml' ? 'parcels.kml' : 'parcels.zip';
-      a.click();
-      window.URL.revokeObjectURL(url);
-    }
+    if (!resp.ok) return;
+    const blob = await resp.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = type === 'kml' ? 'parcels.kml' : 'parcels.zip';
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   return (
     <div className="app">
-      {/* ───────── Sidebar ───────── */}
-      <div className="sidebar">
-        <SearchPanel
-          onResults={handleResults}
-          features={features}
-          selected={selected}
-          toggle={toggle}
-          download={download}
-        />
-      </div>
-
-      {/* ───────── Map ───────── */}
-      <ParcelMap>
-        {features.length > 0 && (
-          <GeoJSON
-            data={features}
-            style={() => ({
-              color: '#ff0000',
-              weight: 2,
-              fillOpacity: 0.5,
-            })}
-          />
-        )}
-      </ParcelMap>
+      <SearchPanel
+        onResults={handleResults}
+        features={features}
+        selected={selected}
+        toggle={toggle}
+        download={download}
+        style={style}
+        setStyle={setStyle}
+      />
+      <ParcelMap
+        features={features}
+        style={style}
+      />
     </div>
   );
 }

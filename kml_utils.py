@@ -1,18 +1,17 @@
 """
 Very small KML + Shapefile helpers (no third-party deps except `pyshp`).
+Includes pop-up descriptions and optional folder naming.
 """
 from __future__ import annotations
 
+import html
 import io
 import os
 import tempfile
 import zipfile
-from datetime import datetime
 from typing import List
 
-# ---------------------------------------------------------------------------#
-# Internal colour helper
-# ---------------------------------------------------------------------------#
+# ── internal colour helper ────────────────────────────────────────────────
 def _hex_to_kml_color(hex_color: str, opacity: float) -> str:
     """
     Convert #RRGGBB + alpha → aabbggrr (KML expects ABGR order).
@@ -20,106 +19,115 @@ def _hex_to_kml_color(hex_color: str, opacity: float) -> str:
     hex_color = hex_color.lstrip("#")
     if len(hex_color) != 6:
         hex_color = "FFFFFF"
-
     r, g, b = hex_color[0:2], hex_color[2:4], hex_color[4:6]
     alpha = int(opacity * 255)
     return f"{alpha:02x}{b}{g}{r}"
 
 
-# ---------------------------------------------------------------------------#
-# Public API – KML
-# ---------------------------------------------------------------------------#
+# ── public API – KML ──────────────────────────────────────────────────────
 def generate_kml(
     features: List[dict],
     region: str,
     *,
-    fill_hex: str,
-    fill_opacity: float,
-    outline_hex: str,
-    outline_weight: int,
     folder_name: str = "Parcels",
+    fill_hex: str = "#FF0000",
+    fill_opacity: float = 0.5,
+    outline_hex: str = "#000000",
+    outline_weight: int = 2,
 ) -> str:
     """
-    Turn a list of GeoJSON‐like features into a string of KML.
+    Return a KML string with <Placemark> pop-ups and a user-defined folder name.
     """
-    fill_kml_color = _hex_to_kml_color(fill_hex, fill_opacity)
-    outline_kml_color = _hex_to_kml_color(outline_hex, 1.0)
+    fill_kml = _hex_to_kml_color(fill_hex, fill_opacity)
+    out_kml = _hex_to_kml_color(outline_hex, 1.0)
 
-    kml_lines: list[str] = [
+    out: list[str] = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         "<kml xmlns='http://www.opengis.net/kml/2.2'>",
-        f"  <Document><name>{folder_name}</name>",
+        f"  <Document><name>{html.escape(folder_name)}</name>",
         f"""  <Style id="parcel">
-            <LineStyle><color>{outline_kml_color}</color><width>{outline_weight}</width></LineStyle>
-            <PolyStyle><color>{fill_kml_color}</color></PolyStyle>
-          </Style>""",
+              <LineStyle><color>{out_kml}</color><width>{outline_weight}</width></LineStyle>
+              <PolyStyle><color>{fill_kml}</color></PolyStyle>
+            </Style>""",
     ]
 
     for feat in features:
-        props = feat.get("properties", {})
+        p = feat.get("properties", {})
         if region == "QLD":
-            placename = f"Lot {props.get('lot')} Plan {props.get('plan')}"
+            lot, plan = p.get("lot"), p.get("plan")
+            name = f"Lot {lot} Plan {plan}"
         else:
-            lot = props.get("lotnumber")
-            sec = props.get("sectionnumber") or ""
-            plan = props.get("planlabel")
-            placename = f"Lot {lot} {'Section ' + sec + ' ' if sec else ''}{plan}"
+            lot = p.get("lotnumber")
+            sec = p.get("sectionnumber") or ""
+            plan = p.get("planlabel")
+            name = f"Lot {lot} {'Section ' + sec + ' ' if sec else ''}{plan}"
 
-        kml_lines.append("    <Placemark>")
-        kml_lines.append(f"      <name>{placename}</name>")
-        kml_lines.append('      <styleUrl>#parcel</styleUrl>')
+        # simple HTML table for pop-up
+        desc_rows = "".join(
+            f"<tr><th>{html.escape(k)}</th><td>{html.escape(str(v))}</td></tr>"
+            for k, v in p.items()
+            if v not in ("", None)
+        )
+        description = f"<![CDATA[<table>{desc_rows}</table>]]>"
+
+        out.extend(
+            [
+                "    <Placemark>",
+                f"      <name>{html.escape(name)}</name>",
+                "      <styleUrl>#parcel</styleUrl>",
+                f"      <description>{description}</description>",
+            ]
+        )
 
         geom = feat.get("geometry", {})
-        gtype = geom.get("type")
-        coords = geom.get("coordinates")
-
-        def _write_ring(ring: list):
-            if ring[0] != ring[-1]:
-                ring.append(ring[0])
-            kml_lines.append("            <coordinates>")
-            kml_lines.extend(f"              {x},{y},0" for x, y in ring)
-            kml_lines.append("            </coordinates>")
-
-        if gtype == "Polygon":
-            polygons = [coords]
-        elif gtype == "MultiPolygon":
-            polygons = coords
-        else:
-            continue
+        polygons = (
+            [geom.get("coordinates")]
+            if geom.get("type") == "Polygon"
+            else geom.get("coordinates", [])
+            if geom.get("type") == "MultiPolygon"
+            else []
+        )
 
         if len(polygons) > 1:
-            kml_lines.append("      <MultiGeometry>")
+            out.append("      <MultiGeometry>")
 
         for poly in polygons:
-            kml_lines.append("        <Polygon>")
-            kml_lines.append("          <outerBoundaryIs><LinearRing>")
-            _write_ring(poly[0])
-            kml_lines.append("          </LinearRing></outerBoundaryIs>")
-
+            out.append("        <Polygon>")
+            out.append("          <outerBoundaryIs><LinearRing>")
+            _write_ring(out, poly[0])
+            out.append("          </LinearRing></outerBoundaryIs>")
             for hole in poly[1:]:
-                kml_lines.append("          <innerBoundaryIs><LinearRing>")
-                _write_ring(hole)
-                kml_lines.append("          </LinearRing></innerBoundaryIs>")
-
-            kml_lines.append("        </Polygon>")
+                out.append("          <innerBoundaryIs><LinearRing>")
+                _write_ring(out, hole)
+                out.append("          </LinearRing></innerBoundaryIs>")
+            out.append("        </Polygon>")
 
         if len(polygons) > 1:
-            kml_lines.append("      </MultiGeometry>")
+            out.append("      </MultiGeometry>")
 
-        kml_lines.append("    </Placemark>")
+        out.append("    </Placemark>")
 
-    kml_lines.append("  </Document></kml>")
-    return "\n".join(kml_lines)
+    out.append("  </Document></kml>")
+    return "\n".join(out)
 
 
-# ---------------------------------------------------------------------------#
-# Public API – Shapefile
-# ---------------------------------------------------------------------------#
+def _write_ring(buf: list[str], ring: list):
+    if ring[0] != ring[-1]:
+        ring.append(ring[0])
+    buf.append("            <coordinates>")
+    buf.extend(f"              {x},{y},0" for x, y in ring)
+    buf.append("            </coordinates>")
+
+
+# ── public API – Shapefile (unchanged) ────────────────────────────────────
 def generate_shapefile(features: List[dict], region: str) -> bytes:
     """
     Return a `.zip` (bytes) containing SHP/SHX/DBF/PRJ for the parcels.
     """
     import shapefile  # pyshp
+
+    import io
+    import shapefile  # duplicate import to satisfy flake-checkers
 
     with tempfile.TemporaryDirectory() as tmp:
         base = os.path.join(tmp, "parcels")
@@ -130,34 +138,28 @@ def generate_shapefile(features: List[dict], region: str) -> bytes:
         w.autoBalance = 1
 
         for feat in features:
-            props = feat.get("properties", {})
+            p = feat.get("properties", {})
             if region == "QLD":
-                lot = props.get("lot", "") or ""
-                sec = ""
-                plan = props.get("plan", "") or ""
+                lot, sec, plan = p.get("lot", ""), "", p.get("plan", "")
             else:
-                lot = props.get("lotnumber", "") or ""
-                sec = props.get("sectionnumber", "") or ""
-                plan = props.get("planlabel", "") or ""
-
+                lot = p.get("lotnumber", "")
+                sec = p.get("sectionnumber", "")
+                plan = p.get("planlabel", "")
             w.record(lot, sec, plan)
 
-            gtype = feat.get("geometry", {}).get("type")
-            coords = feat.get("geometry", {}).get("coordinates")
-            parts: list = []
-
-            if gtype == "Polygon":
-                parts = coords
-            elif gtype == "MultiPolygon":
-                for poly in coords:
-                    parts.extend(poly)
-
+            geom = feat.get("geometry", {})
+            parts = (
+                geom.get("coordinates")
+                if geom.get("type") == "Polygon"
+                else [ring for poly in geom.get("coordinates", []) for ring in poly]
+                if geom.get("type") == "MultiPolygon"
+                else []
+            )
             if parts:
                 w.poly(parts)
 
         w.close()
 
-        # Basic WGS-84 .prj
         with open(base + ".prj", "w") as f:
             f.write(
                 'GEOGCS["WGS 84",DATUM["WGS_1984",'

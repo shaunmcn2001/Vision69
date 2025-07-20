@@ -1,33 +1,10 @@
-/* --- overall layout ----------------------------------------------*/
-[data-testid="stAppViewContainer"] {
-  background: #ffffff !important;
-  color: #212121 !important;
-}
-[data-testid="stAppViewContainer"] .main .block-container {
-  padding: 0 1rem;          /* compact vertical spacing */
+/* Custom page styles */
+#map {
+    height: 500px;
+    width: 100%;
 }
 
-/* --- sidebar ------------------------------------------------------*/
-[data-testid="stSidebar"]          { background: #263238 !important; }
-[data-testid="stSidebar"] *        { color: #eceff1 !important; }
-[data-testid="stSidebar"] textarea,
-[data-testid="stSidebar"] input    { background: #37474f !important; color: #eceff1 !important; }
-
-/* --- AgGrid tweaks ------------------------------------------------*/
-.ag-theme-streamlit .ag-root, .ag-theme-streamlit .ag-header {
-  font-size: 0.85rem;
+body {
+    background-color: #343a40;
+    color: #ffffff;
 }
-.ag-theme-streamlit .ag-header {
-  background: #f5f5f5;
-  color: #212121;
-}
-
-/* --- Folium layer toggle -----------------------------------------*/
-.leaflet-control-layers-list {
-  background: rgba(255, 255, 255, 0.9) !important;
-  color: #212121 !important;
-  font-size: 0.9rem;
-}
-
-/* --- hide Streamlit menu / footer -------------------------------*/
-#MainMenu, header, footer { visibility: hidden; }

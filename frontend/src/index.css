@@ -1,7 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ─── your existing rules go BELOW ─── */
-.map { flex: 1; height: 100vh; position: relative; }
-.map .leaflet-container { height: 100%; width: 100%; }

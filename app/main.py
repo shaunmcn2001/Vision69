@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .constants import NSW_PARCEL_URL, QLD_PARCEL_URL
-from .utils import parse_user_input          # ← add dot
+from .utils import parse_user_input  # ← add dot
 from kml_utils import generate_kml, generate_shapefile
 
 app = FastAPI(title="Vision Parcel API")
@@ -108,7 +108,9 @@ async def search(body: SearchBody):
                 QLD_PARCEL_URL,
                 {
                     "where": f"lotplan='{lot}{plan}'",
-                    "outFields": "lot,plan,parcel_area,desc_,locality",
+                    # The QLD endpoint rejects unknown field names so only
+                    # request a small set of commonly available ones.
+                    "outFields": "lot,plan,locality",
                     "f": "geoJSON",
                 },
             )

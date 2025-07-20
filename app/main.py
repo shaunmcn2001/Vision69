@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from constants import NSW_PARCEL_URL, QLD_PARCEL_URL
+from .constants import NSW_PARCEL_URL, QLD_PARCEL_URL
 from kml_utils import generate_kml, generate_shapefile
 from utils import parse_user_input
 

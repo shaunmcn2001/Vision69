@@ -1,123 +1,155 @@
 import os
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import FileResponse, Response
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import requests, re
 from typing import List
 
-from kml_utils import generate_kml, generate_shapefile, get_bounds
+import httpx
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
-# Full REST endpoint – now returns features
-QLD_PARCEL_URL = (
-    "https://spatial-gis.information.qld.gov.au/arcgis/rest/services/"
-    "PlanningCadastre/LandParcelPropertyFramework/MapServer/4/query"
-)
+from constants import NSW_PARCEL_URL, QLD_PARCEL_URL
+from kml_utils import generate_kml, generate_shapefile
+from utils import parse_user_input
 
-app = FastAPI()
+app = FastAPI(title="Vision Parcel API")
 
-# Allow the React frontend to access this API when served from a different host
-frontend_origin = os.getenv("VISION_FRONTEND")
-if frontend_origin:
-    origins = [frontend_origin]
-else:
-    origins = ["*"]
-
+# ---------------------------------------------------------------------------
+# CORS
+# ---------------------------------------------------------------------------
+frontend_origin = os.getenv("VISION_FRONTEND") or "*"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=[frontend_origin],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# serve React build
+# ---------------------------------------------------------------------------
+# Serve React build & static assets (Approach B: single-service deployment)
+# ---------------------------------------------------------------------------
 app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+
+@app.get("/")
+async def serve_spa():
+    """Return the bundled React index.html."""
+    return FileResponse("frontend/dist/index.html")
+
+
+@app.get("/ping")
+async def ping():
+    return {"pong": True}
+
+
+# ---------------------------------------------------------------------------
+# Request / response models
+# ---------------------------------------------------------------------------
 class SearchBody(BaseModel):
     inputs: List[str]
+
 
 class FeaturesBody(BaseModel):
     features: List[dict]
 
-@app.get("/")
-async def index():
-    return FileResponse("frontend/dist/index.html")
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+async def fetch_geojson(url: str, params: dict) -> list[dict]:
+    """Hit ArcGIS, return list of features (may be empty)."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(url, params=params)
+        r.raise_for_status()
+        data = r.json()
+        return data.get("features", []) or []
+
+
+def _region_from_features(flist: list[dict]) -> str:
+    """Heuristic: if feature has 'lot', we got QLD; else NSW."""
+    return "QLD" if any("lot" in f.get("properties", {}) for f in flist) else "NSW"
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
 
 @app.post("/api/search")
 async def search(body: SearchBody):
-    feats = []
-    regions = []
-    for user_input in body.inputs:
-        user_input = user_input.strip()
-        if not user_input:
+    features, regions = [], []
+
+    for raw in body.inputs:
+        region, lot, section, plan = parse_user_input(raw)
+        if not region:
             continue
-        if "/" in user_input:
-            parts = user_input.split("/")
-            if len(parts) == 3:
-                lot_str, sec_str, plan_str = parts[0].strip(), parts[1].strip(), parts[2].strip()
-            elif len(parts) == 2:
-                lot_str, sec_str, plan_str = parts[0].strip(), "", parts[1].strip()
+
+        if region == "NSW":
+            where = [f"lotnumber='{lot}'", f"plannumber={plan.lstrip('DP')}"]
+            if section is None:
+                where.append("(sectionnumber IS NULL OR sectionnumber='')")
             else:
-                continue
-            plan_num = "".join(filter(str.isdigit, plan_str))
-            if not lot_str or not plan_num:
-                continue
-            where_clauses = [f"lotnumber='{lot_str}'"]
-            if sec_str:
-                where_clauses.append(f"sectionnumber='{sec_str}'")
-            else:
-                where_clauses.append("(sectionnumber IS NULL OR sectionnumber = '')")
-            where_clauses.append(f"plannumber={plan_num}")
-            where = " AND ".join(where_clauses)
-            url = "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Cadastre/MapServer/9/query"
-            params = {"where": where, "outFields": "lotnumber,sectionnumber,planlabel", "outSR": "4326", "f": "geoJSON"}
-            try:
-                res = requests.get(url, params=params, timeout=10)
-                data = res.json()
-                for feat in data.get("features", []) or []:
-                    feats.append(feat)
-                    regions.append("NSW")
-            except Exception:
-                continue
-        else:
-            inp = user_input.replace(" ", "").upper()
-            match = re.match(r"^(\d+)([A-Z].+)$", inp)
-            if not match:
-                continue
-            lot_str = match.group(1)
-            plan_str = match.group(2)
-            url = QLD_PARCEL_URL
-            lotplan = f"{lot_str}{plan_str}"
-            params = {
-                "f": "geojson",
-                "where": f"lotplan='{lotplan}'",
-                "outFields": "lot,plan,parcel_area,desc_,locality",
-            }
-            try:
-                res = requests.get(url, params=params, timeout=10)
-                data = res.json()
-                for feat in data.get("features", []) or []:
-                    feats.append(feat)
-                    regions.append("QLD")
-            except Exception:
-                continue
-    return {"features": feats, "regions": regions}
+                where.append(f"sectionnumber='{section}'")
+
+            feats = await fetch_geojson(
+                NSW_PARCEL_URL,
+                {
+                    "where": " AND ".join(where),
+                    "outFields": "lotnumber,sectionnumber,planlabel",
+                    "outSR": "4326",
+                    "f": "geoJSON",
+                },
+            )
+        else:  # QLD
+            feats = await fetch_geojson(
+                QLD_PARCEL_URL,
+                {
+                    "where": f"lotplan='{lot}{plan}'",
+                    "outFields": "lot,plan,parcel_area,desc_,locality",
+                    "f": "geoJSON",
+                },
+            )
+
+        features.extend(feats)
+        regions.extend([region] * len(feats))
+
+    return {"features": features, "regions": regions}
+
 
 @app.post("/api/download/kml")
 async def download_kml(body: FeaturesBody):
     if not body.features:
-        raise HTTPException(status_code=400, detail="No features provided")
-    region = "QLD" if any("lot" in f.get("properties", {}) for f in body.features) else "NSW"
-    data = generate_kml(body.features, region, "#FF0000", 0.5, "#000000", 2, "Parcels")
-    return Response(content=data, media_type="application/vnd.google-earth.kml+xml", headers={"Content-Disposition": "attachment; filename=parcels.kml"})
+        raise HTTPException(400, "No features provided")
+
+    region = _region_from_features(body.features)
+    kml = generate_kml(
+        body.features,
+        region,
+        fill_hex="#FF0000",
+        fill_opacity=0.5,
+        outline_hex="#000000",
+        outline_weight=2,
+        folder_name="Parcels",
+    )
+    return Response(
+        content=kml,
+        media_type="application/vnd.google-earth.kml+xml",
+        headers={"Content-Disposition": 'attachment; filename="parcels.kml"'},
+    )
+
 
 @app.post("/api/download/shp")
 async def download_shp(body: FeaturesBody):
     if not body.features:
-        raise HTTPException(status_code=400, detail="No features provided")
-    region = "QLD" if any("lot" in f.get("properties", {}) for f in body.features) else "NSW"
-    data = generate_shapefile(body.features, region)
-    return Response(content=data, media_type="application/zip", headers={"Content-Disposition": "attachment; filename=parcels.zip"})
+        raise HTTPException(400, "No features provided")
+
+    region = _region_from_features(body.features)
+    shp_zip = generate_shapefile(body.features, region)
+    return Response(
+        content=shp_zip,
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="parcels.zip"'},
+    )

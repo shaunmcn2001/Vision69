@@ -7,45 +7,30 @@ import {
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-/**
- * Fit map bounds to supplied GeoJSON feature collection.
- */
 function FitBounds({ features }) {
   const map = useMap();
-
   useEffect(() => {
-    if (!features?.length) {
-      // default extent (roughly QLD / NSW region)
+    if (!features.length) {
       map.fitBounds([
         [-39, 137],
         [-9, 155],
       ]);
       return;
     }
-
-    const coords = [];
+    const pts = [];
     features.forEach((f) => {
       const g = f.geometry;
       if (!g) return;
-      const addRing = (ring) => ring.forEach(([x, y]) => coords.push([y, x]));
-      if (g.type === 'Polygon') {
-        g.coordinates.forEach(addRing);
-      } else if (g.type === 'MultiPolygon') {
-        g.coordinates.forEach((poly) => poly.forEach(addRing));
-      }
+      const pushRing = (ring) => ring.forEach(([x, y]) => pts.push([y, x]));
+      if (g.type === 'Polygon') g.coordinates.forEach(pushRing);
+      if (g.type === 'MultiPolygon')
+        g.coordinates.forEach((poly) => poly.forEach(pushRing));
     });
-
-    if (coords.length) {
-      map.fitBounds(coords);
-    }
+    if (pts.length) map.fitBounds(pts);
   }, [features, map]);
-
   return null;
 }
 
-/**
- * Map with styled parcel overlay.
- */
 export default function ParcelMap({ features, style }) {
   const collection = useMemo(
     () => ({ type: 'FeatureCollection', features }),
@@ -59,6 +44,17 @@ export default function ParcelMap({ features, style }) {
     fillOpacity: style.opacity,
   });
 
+  const onEach = (feature, layer) => {
+    const p = feature.properties || {};
+    const rows = Object.entries(p)
+      .filter(([, v]) => v !== '' && v !== null)
+      .map(
+        ([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`,
+      )
+      .join('');
+    layer.bindPopup(`<table>${rows}</table>`, { maxHeight: 200 });
+  };
+
   return (
     <div className="map">
       <MapContainer
@@ -66,22 +62,14 @@ export default function ParcelMap({ features, style }) {
         zoom={5}
         style={{ height: '100%', width: '100%' }}
       >
-        <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <TileLayer
-          attribution="&copy; CartoDB"
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        />
-        {/* Satellite option */}
-        <TileLayer
-          attribution="Google"
-          url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-        />
-
+        {/* basemaps … */}
         {features.length > 0 && (
-          <GeoJSON key={features.length} data={collection} style={styleFn} />
+          <GeoJSON
+            key={features.length}
+            data={collection}
+            style={styleFn}
+            onEachFeature={onEach}
+          />
         )}
         <FitBounds features={features} />
       </MapContainer>

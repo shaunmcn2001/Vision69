@@ -1,3 +1,12 @@
+/* frontend/src/index.css  */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── optional: keep your own rules AFTER the directives ─── */
+/* .map  { height: 100vh; }   etc. */
+
 /* ───────── core layout ───────── */
 .app {
   position: relative;

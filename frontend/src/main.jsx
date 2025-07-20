@@ -1,4 +1,4 @@
-import, { strict mode } React from 'react';
+import React, { strict mode } React from 'react';
 import { create root } from 'react-dom/client';
 
 import 'leaflet/dist/leaflet.css';   //  ←  put this line back

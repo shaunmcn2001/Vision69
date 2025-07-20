@@ -1,130 +1,121 @@
 import { useState } from 'react';
+import ResultsList from './ResultsList.jsx';
 import { API_BASE } from './api.js';
 
-export default function SearchPanel({ onResults, features, selected, toggle, download }) {
-  const [single, setSingle] = useState('');
+/**
+ * Sidebar controls:
+ * - bulk textarea input
+ * - single Search button
+ * - style (colour pickers, opacity, weight)
+ * - results table w/ checkboxes
+ * - download KML / SHP
+ */
+export default function SearchPanel({
+  onResults,
+  features,
+  selected,
+  toggle,
+  download,
+  style,
+  setStyle,
+}) {
   const [bulk, setBulk] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState('');
 
-  // ─── helpers ─────────────────────────────────────────────────────────────
-  const parseBulkInput = (txt) =>
-    txt
-      .split(/\r?\n/)
+  const handleSearch = async () => {
+    const lines = bulk
+      .split('\n')
       .map((s) => s.trim())
       .filter(Boolean);
+    if (!lines.length) return;
 
-  const doSearch = async (inputs) => {
-    if (!inputs.length) return;
-    setLoading(true);
-    setError('');
+    const resp = await fetch(`${API_BASE}/api/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inputs: lines }),
+    });
 
-    try {
-      const r = await fetch(`${API_BASE}/api/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputs }),
-      });
-      if (!r.ok) throw new Error(`API error ${r.status}`);
-      const json = await r.json();
-      onResults(json.features || []);
-    } catch (e) {
-      console.error(e);
-      setError(e.message || 'Search failed');
-    } finally {
-      setLoading(false);
+    if (!resp.ok) {
+      console.error('Search failed', resp.status);
+      return;
     }
+    const data = await resp.json();
+    onResults(data.features || []);
   };
 
-  // ─── handlers ────────────────────────────────────────────────────────────
-  const handleSingle = (e) => setSingle(e.target.value);
+  const updateStyle = (patch) => setStyle({ ...style, ...patch });
 
-  const submitSingle = (e) => {
-    e.preventDefault();
-    if (single.trim()) doSearch([single.trim()]);
-  };
-
-  const submitBulk = (e) => {
-    e.preventDefault();
-    const list = parseBulkInput(bulk);
-    if (list.length) doSearch(list);
-  };
-
-  // ─── render ──────────────────────────────────────────────────────────────
   return (
-    <div className="search-panel">
-      {/* ───────── Single lot/plan ───────── */}
-      <form onSubmit={submitSingle} className="form-block">
-        <label htmlFor="singleInput">Lot / Plan</label>
-        <input
-          id="singleInput"
-          name="lotplan-single"
-          value={single}
-          onChange={handleSingle}
-          placeholder="e.g. 3RP123456  or  43/DP987654"
-          autoComplete="off"
-        />
-        <button type="submit" disabled={loading}>
-          Search
-        </button>
-      </form>
+    <div className="sidebar">
+      <h2>Search</h2>
+      <textarea
+        value={bulk}
+        onChange={(e) => setBulk(e.target.value)}
+        placeholder="QLD: 3RP123456&#10;NSW: 4/DP765432 or 4/1/DP765432"
+      />
+      <button className="primary" onClick={handleSearch}>
+        Search
+      </button>
 
-      {/* ───────── Bulk list ───────── */}
-      <form onSubmit={submitBulk} className="form-block">
-        <label htmlFor="bulkInput">Bulk list (one per line)</label>
-        <textarea
-          id="bulkInput"
-          name="lotplan-bulk"
-          value={bulk}
-          onChange={(e) => setBulk(e.target.value)}
-          placeholder="Lot-Plan on each line"
-          rows={6}
-        />
-        <button type="submit" disabled={loading}>
-          Search bulk
-        </button>
-      </form>
-
-      {/* ───────── Download row ───────── */}
       {features.length > 0 && (
-        <div className="download-row">
-          <button onClick={() => download('kml')}>Download KML</button>
-          <button onClick={() => download('shp')}>Download SHP</button>
-        </div>
-      )}
+        <>
+          <hr />
+          <h3>Style</h3>
+          <label className="inline">
+            Fill&nbsp;
+            <input
+              type="color"
+              value={style.fill}
+              onChange={(e) => updateStyle({ fill: e.target.value })}
+            />
+          </label>
+          <label className="inline">
+            Outline&nbsp;
+            <input
+              type="color"
+              value={style.outline}
+              onChange={(e) => updateStyle({ outline: e.target.value })}
+            />
+          </label>
+          <label>
+            Opacity&nbsp;
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={style.opacity}
+              onChange={(e) =>
+                updateStyle({ opacity: parseFloat(e.target.value) })
+              }
+            />
+            <span className="range-val">{style.opacity.toFixed(2)}</span>
+          </label>
+          <label>
+            Outline weight&nbsp;
+            <input
+              type="number"
+              min={0}
+              max={10}
+              value={style.weight}
+              onChange={(e) =>
+                updateStyle({ weight: Number(e.target.value) })
+              }
+            />
+          </label>
 
-      {/* ───────── Results list ───────── */}
-      {features.length > 0 && (
-        <ul className="results-list">
-          {features.map((f, i) => (
-            <li key={i}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={!!selected[i]}
-                  onChange={() => toggle(i)}
-                />
-                {f.properties.lot ? (
-                  <>
-                    {f.properties.lot}/{f.properties.plan}
-                  </>
-                ) : (
-                  <>
-                    {f.properties.lotnumber}
-                    {f.properties.sectionnumber
-                      ? `/${f.properties.sectionnumber}`
-                      : ''}
-                    /DP{f.properties.planlabel}
-                  </>
-                )}
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
+          <hr />
+          <ResultsList
+            features={features}
+            selected={selected}
+            toggle={toggle}
+          />
 
-      {error && <p className="error">{error}</p>}
-      {loading && <p className="loading">Searching…</p>}
+          <div className="downloads">
+            <button onClick={() => download('kml')}>Download KML</button>
+            <button onClick={() => download('shp')}>Download SHP</button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { strict mode } from 'react';
-import { create root } from 'react-dom/client';
+import { creatRoot } from 'react-dom/client';
 
 import 'leaflet/dist/leaflet.css';   //  ←  put this line back
 import './index.css';

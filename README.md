@@ -22,6 +22,14 @@ VITE_API_BASE=https://my-backend.onrender.com npm --prefix frontend run build
 The FastAPI service expects the front-end origin in the `VISION_FRONTEND`
 environment variable so CORS is configured correctly.
 
+When developing locally with `npm run dev`, create a `.env` file inside the
+`frontend` directory:
+
+```bash
+echo "VITE_API_BASE=http://localhost:8000" > frontend/.env
+```
+This ensures the React app talks to the FastAPI server running on your machine.
+
 ## Running the app locally
 
 Start the server with Uvicorn and open your browser at <http://localhost:8000>:

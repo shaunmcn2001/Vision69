@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from .constants import NSW_PARCEL_URL, QLD_PARCEL_URL
 from .utils import parse_user_input          # ← add dot
-from .kml_utils import generate_kml, generate_shapefile
+from kml_utils import generate_kml, generate_shapefile
 
 app = FastAPI(title="Vision Parcel API")
 

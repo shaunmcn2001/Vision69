@@ -10,12 +10,24 @@ import './App.css';
 export default function App() {
   const [features, setFeatures] = useState([]);       // GeoJSON Feature[]
   const [selected, setSelected] = useState({});       // {rowIndex:boolean}
-  const [style, setStyle] = useState({
+  const defaultStyle = {
     fill: '#FF0000',
     outline: '#000000',
     opacity: 0.5,
     weight: 2,
+  };
+  const [style, setStyle] = useState(() => {
+   try {
+      return JSON.parse(localStorage.getItem('parcelStyle')) || defaultStyle;
+    } catch {
+      return defaultStyle;
+    }
   });
+
+  // persist every change
+  useEffect(() => {
+    localStorage.setItem('parcelStyle', JSON.stringify(style));
+  }, [style]);
 
   // toggle row selection
   const toggle = (idx) =>

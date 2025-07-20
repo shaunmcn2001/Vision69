@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';   // ← add useEffect
 import ParcelMap from './ParcelMap.jsx';
 import SearchPanel from './SearchPanel.jsx';
 import { API_BASE } from './api.js';

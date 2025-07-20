@@ -69,6 +69,7 @@ export default function ParcelMap({ features, style }) {
             data={collection}
             style={styleFn}
             onEachFeature={onEach}
+            pane="overlayPane"
           />
         )}
         <FitBounds features={features} />

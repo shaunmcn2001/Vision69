@@ -35,10 +35,10 @@ export default function SearchPanel({
 
   return (
     <div className="sidebar" title="Drag right edge to resize">
-      {/* header with close (✕) */}
+      {/* header with close button */}
       <div className="sidebar-header">
         <h2>Search</h2>
-        <button className="close-btn" onClick={onClose}>✕</button>
+        <button className="close-btn" onClick={onClose}>Cancel</button>
       </div>
 
       <textarea

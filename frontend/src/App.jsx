@@ -3,6 +3,7 @@ import NavBar from './NavBar.jsx';
 import ResultDrawer from './ResultDrawer.jsx';
 import ParcelMap from './ParcelMap.jsx';    // keep your map component
 import SearchPanel from './SearchPanel.jsx';// existing search logic
+import './App.css';
 
 export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);

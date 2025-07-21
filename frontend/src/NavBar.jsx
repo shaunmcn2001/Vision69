@@ -1,36 +1,31 @@
 import {
-  MagnifyingGlassIcon, HomeIcon, UserGroupIcon,
-  BriefcaseIcon, Cog6ToothIcon,
+  MagnifyingGlassIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
+import logo from './assets/logo.svg';          // <-- put your SVG here
 
 export default function NavBar({ onToggleSearch }) {
-  const Btn = ({ children, active, onClick }) => (
+  const Btn = ({ children, onClick }) => (
     <button
+      className="p-2 rounded hover:bg-gray-100 active:bg-gray-200"
       onClick={onClick}
-      className={`p-1.5 rounded-lg transition
-        ${active
-          ? 'bg-blue-100 text-blue-600 dark:bg-gray-800 dark:text-blue-400'
-          : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}`}
     >
       {children}
     </button>
   );
 
   return (
-    <aside className="flex flex-col items-center w-16 h-screen py-8 space-y-8
-                      border-r bg-white dark:bg-gray-900 dark:border-gray-700">
-      <a href="#home">
-        <img src="/logo.svg" alt="logo" className="h-6 w-auto" />
-      </a>
+    <header className="h-12 flex items-center justify-between border-b px-3 shrink-0">
+      <img src={logo} alt="Vision" className="h-7" />
 
-      <Btn onClick={onToggleSearch} active>
-        <MagnifyingGlassIcon className="w-6 h-6" />
-      </Btn>
-
-      <Btn><HomeIcon className="w-6 h-6" /></Btn>
-      <Btn><UserGroupIcon className="w-6 h-6" /></Btn>
-      <Btn><BriefcaseIcon className="w-6 h-6" /></Btn>
-      <Btn><Cog6ToothIcon className="w-6 h-6" /></Btn>
-    </aside>
+      <div className="flex items-center gap-2">
+        <Btn onClick={onToggleSearch}>
+          <MagnifyingGlassIcon className="h-6 w-6" />
+        </Btn>
+        <Btn>
+          <Cog6ToothIcon className="h-6 w-6" />
+        </Btn>
+      </div>
+    </header>
   );
 }

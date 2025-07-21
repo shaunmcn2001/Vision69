@@ -65,3 +65,17 @@
 /* ───────── map ───────── */
 .map{flex:1;position:relative;height:100vh;}
 .map .leaflet-container{height:100%;width:100%;}
+
+/* compact map controls on the right */
+.leaflet-control {
+  box-shadow: none;
+}
+.leaflet-control-zoom a {
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+}
+.leaflet-control-layers {
+  background: #1b1b1b;
+  border: 1px solid #333;
+}

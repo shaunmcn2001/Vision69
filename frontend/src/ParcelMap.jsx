@@ -5,8 +5,14 @@ import {
   GeoJSON,
   LayersControl,
   useMap,
+  ZoomControl,
 } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
+import 'leaflet-control-geocoder';
+import 'leaflet-measure/dist/leaflet-measure.css';
+import 'leaflet-measure/dist/leaflet-measure.js';
 
 const { BaseLayer } = LayersControl;
 
@@ -33,6 +39,28 @@ function FitBounds({ features }) {
 
     if (pts.length) map.fitBounds(pts);
   }, [features, map]);
+
+  return null;
+}
+
+/* ── custom controls (geocoder + measure) ─────────────────────── */
+function ExtraControls() {
+  const map = useMap();
+
+  useEffect(() => {
+    const geocoder = L.Control.geocoder({
+      defaultMarkGeocode: true,
+      position: 'topright',
+    }).addTo(map);
+
+    const measure = L.control.measure({ position: 'topright' });
+    measure.addTo(map);
+
+    return () => {
+      map.removeControl(geocoder);
+      map.removeControl(measure);
+    };
+  }, [map]);
 
   return null;
 }
@@ -65,9 +93,11 @@ export default function ParcelMap({ features, style }) {
       <MapContainer
         center={[-23.5, 143.0]}
         zoom={5}
+        zoomControl={false}
         style={{ height: '100%', width: '100%' }}
       >
-        <LayersControl position="topleft" collapsed={false}>
+        <ZoomControl position="topright" />
+        <LayersControl position="topright" collapsed>
           <BaseLayer checked name="CartoDB Positron">
             <TileLayer
               attribution="&copy; CartoDB"
@@ -99,6 +129,7 @@ export default function ParcelMap({ features, style }) {
             pane="overlayPane"      /* keep below marker pane, above tiles */
           />
         )}
+        <ExtraControls />
         <FitBounds features={features} />
       </MapContainer>
     </div>

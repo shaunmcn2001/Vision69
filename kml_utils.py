@@ -28,12 +28,11 @@ def _hex_to_kml_color(hex_color: str, opacity: float) -> str:
 def generate_kml(
     features: List[dict],
     region: str,
-    *,
-    folder_name: str = "Parcels",
     fill_hex: str = "#FF0000",
     fill_opacity: float = 0.5,
     outline_hex: str = "#000000",
     outline_weight: int = 2,
+    folder_name: str = "Parcels",
 ) -> str:
     """
     Return a KML string with <Placemark> pop-ups and a user-defined folder name.
@@ -173,3 +172,24 @@ def generate_shapefile(features: List[dict], region: str) -> bytes:
                 zf.write(base + ext, f"parcels{ext}")
 
         return buf.getvalue()
+
+
+# ── public API – Bounds helper ───────────────────────────────────────────
+def get_bounds(features: List[dict]) -> List[List[float]]:
+    """Return [ [min_y, min_x], [max_y, max_x] ] for the features."""
+    pts = []
+    for feat in features:
+        geom = feat.get("geometry", {})
+        if geom.get("type") == "Polygon":
+            rings = geom.get("coordinates", [])
+        elif geom.get("type") == "MultiPolygon":
+            rings = [r for poly in geom.get("coordinates", []) for r in poly]
+        else:
+            rings = []
+        for ring in rings:
+            pts.extend(ring)
+    if not pts:
+        return []
+    xs = [x for x, _ in pts]
+    ys = [y for _, y in pts]
+    return [[min(ys), min(xs)], [max(ys), max(xs)]]

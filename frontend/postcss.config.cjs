@@ -1,9 +1,7 @@
-/* frontend/postcss.config.cjs
-   —— CommonJS format so PostCSS can load it under Node 22 ——
-*/
+// frontend/postcss.config.cjs
 module.exports = {
   plugins: {
-    '@tailwindcss/postcss': {},   // Tailwind v4 PostCSS plugin
-    autoprefixer: {},            // add vendor prefixes
+    "@tailwindcss/postcss": {},   // Tailwind v4 PostCSS plug-in
+    autoprefixer: {},            // vendor prefixes
   },
 };

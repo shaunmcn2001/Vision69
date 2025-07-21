@@ -63,10 +63,12 @@ export default function App() {
   /* ───── UI ───── */
   return (
     <div className={`app ${sidebarOpen ? '' : 'sidebar-closed'}`}>
-      {/* toggle button – always visible */}
-      <button className="toggle-btn" onClick={toggleSidebar} title="Search">
-        🔍
-      </button>
+      {/* toggle button – hide when sidebar is open */}
+      {!sidebarOpen && (
+        <button className="toggle-btn" onClick={toggleSidebar} title="Search">
+          🔍
+        </button>
+      )}
 
       {/* sidebar (hidden when closed) */}
       {sidebarOpen && (

@@ -14,7 +14,9 @@ export default function ResultDrawer({ open, onClose, children }) {
           <XMarkIcon className="w-6 h-6" />
         </button>
       </div>
-      <div className="h-[calc(100vh-4rem)] overflow-y-auto py-4">{children}</div>
+      <div className="h-[calc(100vh-4rem)] overflow-y-auto py-4">
+        {children}
+      </div>
     </div>
   );
 }

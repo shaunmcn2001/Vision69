@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import NavBar from './NavBar.jsx';
 import ResultDrawer from './ResultDrawer.jsx';
-import ParcelMap from './ParcelMap.jsx';     // keep your existing map component
-import SearchPanel from './SearchPanel.jsx'; // your search + results logic
-import './index.css';
+import ParcelMap from './ParcelMap.jsx';    // keep your map component
+import SearchPanel from './SearchPanel.jsx';// existing search logic
 
 export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <div className="flex h-screen dark:bg-gray-800">
-      <NavBar onToggleSearch={() => setDrawerOpen((o) => !o)} />
+      <NavBar onToggleSearch={() => setDrawerOpen(o => !o)} />
 
       <ResultDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <SearchPanel onClose={() => setDrawerOpen(false)} />

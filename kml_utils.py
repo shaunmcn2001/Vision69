@@ -28,11 +28,12 @@ def _hex_to_kml_color(hex_color: str, opacity: float) -> str:
 def generate_kml(
     features: List[dict],
     region: str,
+    *,
+    folder_name: str = "Parcels",
     fill_hex: str = "#FF0000",
     fill_opacity: float = 0.5,
     outline_hex: str = "#000000",
     outline_weight: int = 2,
-    folder_name: str = "Parcels",
 ) -> str:
     """
     Return a KML string with <Placemark> pop-ups and a user-defined folder name.
@@ -172,36 +173,3 @@ def generate_shapefile(features: List[dict], region: str) -> bytes:
                 zf.write(base + ext, f"parcels{ext}")
 
         return buf.getvalue()
-
-
-# ── public API – Bounding box helper ─────────────────────────────────────
-def get_bounds(features: List[dict]) -> List[List[float]]:
-    """Return [[min_y, min_x], [max_y, max_x]] for the given features."""
-    min_x, min_y = float("inf"), float("inf")
-    max_x, max_y = float("-inf"), float("-inf")
-
-    for feat in features:
-        geom = feat.get("geometry", {})
-        polygons = (
-            [geom.get("coordinates")]
-            if geom.get("type") == "Polygon"
-            else geom.get("coordinates", [])
-            if geom.get("type") == "MultiPolygon"
-            else []
-        )
-
-        for poly in polygons:
-            for ring in poly:
-                for x, y in ring:
-                    if x < min_x:
-                        min_x = x
-                    if x > max_x:
-                        max_x = x
-                    if y < min_y:
-                        min_y = y
-                    if y > max_y:
-                        max_y = y
-
-    if min_x == float("inf"):
-        return [[0.0, 0.0], [0.0, 0.0]]
-    return [[min_y, min_x], [max_y, max_x]]

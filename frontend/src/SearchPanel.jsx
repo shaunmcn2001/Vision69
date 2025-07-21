@@ -1,137 +1,93 @@
 import { useState } from 'react';
-import ResultsList   from './ResultsList.jsx';
-import { API_BASE }  from './api.js';
+import ResultsList from './ResultsList.jsx';
+import { API_BASE } from './api.js';
 
 export default function SearchPanel({
   onResults,
-  features = [],
-  selected = [],
+  features,
+  selected,
   toggle,
   download,
   style,
   setStyle,
+  onClose,
 }) {
-  const [bulk,       setBulk]       = useState('');
+  const [bulk, setBulk] = useState('');
   const [folderName, setFolderName] = useState('Parcels');
-  const [fileName,   setFileName]   = useState('parcels.kml');
+  const [fileName,  setFileName]  = useState('parcels.kml');
 
-  /* -------- execute search -------- */
   const handleSearch = async () => {
-    const inputs = bulk
-      .split(/\r?\n/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (inputs.length === 0) return;
-
-    const res = await fetch(`${API_BASE}/api/search`, {
-      method : 'POST',
+    const lines = bulk.split('\n').map((s) => s.trim()).filter(Boolean);
+    if (!lines.length) return;
+    const r = await fetch(`${API_BASE}/api/search`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body   : JSON.stringify({ inputs }),
+      body: JSON.stringify({ inputs: lines }),
     });
-    if (!res.ok) return alert('Search failed – check server logs.');
-    const data = await res.json();
-    onResults(data.features ?? []);
+    if (!r.ok) return;
+    const data = await r.json();
+    onResults(data.features || []);
   };
 
-  const updateStyle = (patch) => setStyle({ ...style, ...patch });
-  const downloadWithMeta = (type) =>
-    download(
-      type,
-      folderName,
-      type === 'kml' ? fileName : fileName.replace(/\.kml$/i, '.zip'),
-    );
+  const updateStyle = (p) => setStyle({ ...style, ...p });
+  const downloadWithMeta = (t) =>
+    download(t, folderName, t === 'kml' ? fileName : fileName.replace(/\.kml$/i, '.zip'));
 
-  /* -------- render -------- */
   return (
-    <div className="p-4 space-y-4 w-80 shrink-0">
-      <h2 className="text-xl font-semibold">Search</h2>
+    <div className="sidebar" title="Drag right edge to resize">
+      {/* header with close (✕) */}
+      <div className="sidebar-header">
+        <h2>Search</h2>
+        <button className="close-btn" onClick={onClose}>✕</button>
+      </div>
 
       <textarea
-        className="input-base h-24 resize-none"
         value={bulk}
         onChange={(e) => setBulk(e.target.value)}
-        placeholder="One LotPlan or DP per line"
-      ></textarea>
-
-      {/* 🔧 1 — close the button and add a label */}
-      <button className="btn-primary w-full" onClick={handleSearch}>
+        placeholder="QLD 3RP123456\nNSW 4/DP765432"
+      />
+      <button className="primary" onClick={handleSearch}>
         Search
       </button>
 
       {features.length > 0 && (
         <>
           <hr />
-
-          {/* ---- export ---- */}
-          <h3 className="font-medium">Export options</h3>
-          <label className="block text-xs">
-            KML folder name
-            <input
-              type="text"
-              className="w-full border rounded p-1 mt-1"
-              value={folderName}
-              onChange={(e) => setFolderName(e.target.value)}
-            />
+          <h3>Export</h3>
+          <label>Folder name
+            <input value={folderName} onChange={(e)=>setFolderName(e.target.value)} />
           </label>
-          <label className="block text-xs mt-2">
-            Download file name
-            <input
-              type="text"
-              className="w-full border rounded p-1 mt-1"
-              value={fileName}
-              onChange={(e) => setFileName(e.target.value)}
-            />
+          <label>File name
+            <input value={fileName}  onChange={(e)=>setFileName(e.target.value)} />
           </label>
 
-          {/* ---- style ---- */}
-          <hr className="my-2" />
-          <h3 className="font-medium">Style</h3>
-          <label className="block text-xs">
-            Fill colour
-            <input
-              type="color"
-              className="w-full h-8 p-0 border rounded mt-1"
-              value={style.fillColor}
-              onChange={(e) => updateStyle({ fillColor: e.target.value })}
-            />
+          <hr />
+          <h3>Style</h3>
+          <label className="inline">Fill&nbsp;
+            <input type="color" value={style.fill}
+              onChange={(e)=>updateStyle({fill:e.target.value})}/>
           </label>
-          <label className="block text-xs mt-2">
-            Fill opacity
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              className="w-full"
-              value={style.fillOpacity}
-              onChange={(e) =>
-                updateStyle({ fillOpacity: Number(e.target.value) })
-              }
-            />
+          <label className="inline">Outline&nbsp;
+            <input type="color" value={style.outline}
+              onChange={(e)=>updateStyle({outline:e.target.value})}/>
+          </label>
+          <label>Opacity&nbsp;
+            <input type="range" min={0} max={1} step={0.01}
+              value={style.opacity}
+              onChange={(e)=>updateStyle({opacity:+e.target.value})}/>
+            <span className="range-val">{style.opacity.toFixed(2)}</span>
+          </label>
+          <label>Outline weight&nbsp;
+            <input type="number" min={0} max={10}
+              value={style.weight}
+              onChange={(e)=>updateStyle({weight:+e.target.value})}/>
           </label>
 
-          {/* ---- list & download ---- */}
-          <ResultsList
-            features={features}
-            selected={selected}
-            toggle={toggle}
-          />
+          <ResultsList features={features} selected={selected} toggle={toggle} />
 
-          <div className="flex gap-2 justify-between mt-4">
-            {/* 🔧 2 — correct class name */}
-            <button
-              className="btn-secondary flex-1"
-              onClick={() => downloadWithMeta('kml')}
-            >
-              Download KML
-            </button>
-            {/* 🔧 3 — correct class name */}
-            <button
-              className="btn-secondary flex-1"
-              onClick={() => downloadWithMeta('shp')}
-            >
-              Download SHP
-            </button>
+          <div className="downloads">
+            <button onClick={()=>downloadWithMeta('kml')}>Download KML</button>
+            <button onClick={()=>downloadWithMeta('shp')}>Download SHP</button>
           </div>
         </>
       )}

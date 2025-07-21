@@ -1,77 +1,89 @@
-import { useState, useCallback } from 'react';
-import NavBar        from './NavBar.jsx';
-import SearchPanel   from './SearchPanel.jsx';
-import ParcelMap     from './ParcelMap.jsx';
-import ResultDrawer  from './ResultDrawer.jsx';
-import { API_BASE }  from './api.js';
-import './App.css';
+import { useState, useMemo, useEffect } from 'react';
+import ParcelMap from './ParcelMap.jsx';
+import SearchPanel from './SearchPanel.jsx';
+import { API_BASE } from './api.js';
+import './App.css';                       // global dark theme
 
 export default function App() {
-  /* ---------- reactive state ---------- */
-  const [features,  setFeatures]  = useState([]);      // search results
-  const [selected,  setSelected]  = useState([]);      // ids that are ticked
-  const [style,     setStyle]     = useState({         // map/polygon styling
-    fillColor   : '#FF0000',
-    fillOpacity : 0.5,
+  /* ───── parcels & styling state ───── */
+  const [features, setFeatures] = useState([]);
+  const [selected, setSelected]   = useState({});
+  const defaultStyle = {
+    fill: '#FF0000',
+    outline: '#FFFFFF',
+    opacity: 0.5,
+    weight: 2,
+  };
+  const [style, setStyle] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('parcelStyle')) || defaultStyle;
+    } catch {
+      return defaultStyle;
+    }
   });
-  const [drawerOpen, setDrawerOpen] = useState(false); // RHS results drawer
+  useEffect(() => {
+    localStorage.setItem('parcelStyle', JSON.stringify(style));
+  }, [style]);
 
-  /* ---------- helpers ---------- */
-  const toggleSelect = (id) =>
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  /* ───── sidebar open / closed ───── */
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const toggleSidebar = () => setSidebarOpen((o) => !o);
 
-  const download = useCallback(
-    async (type, folderName, fileName) => {
-      const body = {
-        type,
-        folderName,
-        fileName,
-        featureIds: selected,
-        style,
-      };
-      const res = await fetch(`${API_BASE}/api/export`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) return alert('Export failed – check server logs.');
-      /* Stream the blob to the browser */
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
-    },
-    [selected, style],
-  );
+  /* ───── helpers ───── */
+  const toggleRow = (idx) =>
+    setSelected((s) => ({ ...s, [idx]: !s[idx] }));
 
-  /* ---------- render ---------- */
+  const handleResults = (list) => {
+    setFeatures(list);
+    setSelected({});
+  };
+
+  const chosen = useMemo(() => {
+    const picked = features.filter((_, i) => selected[i]);
+    return picked.length ? picked : features;
+  }, [features, selected]);
+
+  const download = async (type, folderName, fileName) => {
+    if (!features.length) return;
+    const resp = await fetch(`${API_BASE}/api/download/${type}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ features: chosen, folderName, fileName }),
+    });
+    if (!resp.ok) return;
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  /* ───── UI ───── */
   return (
-    <div className="h-screen w-screen flex flex-col">
-      <NavBar onToggleSearch={() => setDrawerOpen((o) => !o)} />
+    <div className={`app ${sidebarOpen ? '' : 'sidebar-closed'}`}>
+      {/* toggle button – always visible */}
+      <button className="toggle-btn" onClick={toggleSidebar} title="Search">
+        🔍
+      </button>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* LEFT: map */}
-        <ParcelMap style={style} selected={selected} features={features} />
+      {/* sidebar (hidden when closed) */}
+      {sidebarOpen && (
+        <SearchPanel
+          onResults={handleResults}
+          features={features}
+          selected={selected}
+          toggle={toggleRow}
+          download={download}
+          style={style}
+          setStyle={setStyle}
+          onClose={toggleSidebar}
+        />
+      )}
 
-        {/* RIGHT: drawer / search */}
-        <ResultDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <SearchPanel
-            onResults={(f) => {
-              setFeatures(f);
-              setSelected([]);       // reset ticks on new query
-            }}
-            features={features}
-            selected={selected}
-            toggle={toggleSelect}
-            download={download}
-            style={style}
-            setStyle={setStyle}
-          />
-        </ResultDrawer>
-      </div>
+      {/* map */}
+      <ParcelMap features={features} style={style} />
     </div>
   );
 }

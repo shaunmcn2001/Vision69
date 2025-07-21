@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import NavBar from './NavBar.jsx';
 import ResultDrawer from './ResultDrawer.jsx';
 import ParcelMap from './ParcelMap.jsx';    // keep your map component

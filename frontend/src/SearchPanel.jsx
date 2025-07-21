@@ -46,16 +46,9 @@ export default function SearchPanel({
     <div className="p-4 space-y-4 w-80 shrink-0">
       <h2 className="text-xl font-semibold">Search</h2>
 
-      <textarea
-        className="w-full h-24 rounded border p-2 text-sm"
-        value={bulk}
-        onChange={(e) => setBulk(e.target.value)}
-        placeholder="One LotPlan or DP per line"
-      />
+      <textarea className="input-base h-24 resize-none"
 
-      <button className="primary w-full" onClick={handleSearch}>
-        Search
-      </button>
+     <button className="btn-primary w-full" onClick={handleSearch}>
 
       {features.length > 0 && (
         <>
@@ -117,7 +110,7 @@ export default function SearchPanel({
           />
 
           <div className="flex gap-2 justify-between mt-4">
-            <button className="secondary flex-1" onClick={() => downloadWithMeta('kml')}>
+            <button className="btn-secondary flex-1" onClick={() => downloadWithMeta('kml')}>
               Download KML
             </button>
             <button className="secondary flex-1" onClick={() => downloadWithMeta('shp')}>

@@ -1,4 +1,5 @@
 import React from 'react';
+import './index.css';
 import ReactDOM from 'react-dom/client';
 import 'leaflet/dist/leaflet.css';   // map tiles
 import './index.css';               // Tailwind bundle

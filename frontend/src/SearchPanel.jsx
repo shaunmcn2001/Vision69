@@ -4,8 +4,8 @@ import { API_BASE }  from './api.js';
 
 export default function SearchPanel({
   onResults,
-  features = [],          // <-- safe default
-  selected = [],          // <-- safe default
+  features = [],
+  selected = [],
   toggle,
   download,
   style,
@@ -53,7 +53,10 @@ export default function SearchPanel({
         placeholder="One LotPlan or DP per line"
       ></textarea>
 
-     <button className="btn-primary w-full" onClick={handleSearch}>
+      {/* 🔧 1 — close the button and add a label */}
+      <button className="btn-primary w-full" onClick={handleSearch}>
+        Search
+      </button>
 
       {features.length > 0 && (
         <>
@@ -115,10 +118,18 @@ export default function SearchPanel({
           />
 
           <div className="flex gap-2 justify-between mt-4">
-            <button className="btn-secondary flex-1" onClick={() => downloadWithMeta('kml')}>
+            {/* 🔧 2 — correct class name */}
+            <button
+              className="btn-secondary flex-1"
+              onClick={() => downloadWithMeta('kml')}
+            >
               Download KML
             </button>
-            <button className="secondary flex-1" onClick={() => downloadWithMeta('shp')}>
+            {/* 🔧 3 — correct class name */}
+            <button
+              className="btn-secondary flex-1"
+              onClick={() => downloadWithMeta('shp')}
+            >
               Download SHP
             </button>
           </div>

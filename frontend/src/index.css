@@ -1,37 +1,20 @@
-/*------------------------------------------------
- |  Tailwind base + utilities
- *------------------------------------------------*/
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/*  frontend/src/index.css  */
 
-/*------------------------------------------------
- |  Global layout helpers
- *------------------------------------------------*/
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-}
+/* 1 ▸ Bring Tailwind v4 into the file (this defines *all* utilities) */
+@import "tailwindcss";
 
-/* Make the Leaflet map fill its flex cell */
-.leaflet-container {
+/* 2 ▸ Global glue – full-height flex layout */
+html, body, #root { height: 100%; margin: 0; }
+
+.leaflet-container {           /* make Leaflet fill its cell */
   width: 100% !important;
   height: 100% !important;
 }
 
-/*------------------------------------------------
- |  Design tokens – reuse with @apply
- *------------------------------------------------*/
+/* 3 ▸ Re-usable component classes — now that utilities exist
+       @apply works again */
 @layer components {
-  .btn-primary {
-    @apply rounded-md px-3 py-2 font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors;
-  }
-  .btn-secondary {
-    @apply rounded-md px-3 py-2 text-gray-700 border border-gray-300 hover:bg-gray-100 active:bg-gray-200 transition-colors;
-  }
-  .input-base {
-    @apply w-full rounded border border-gray-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500;
-  }
+  .btn-primary   { @apply rounded px-3 py-2 font-medium text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors; }
+  .btn-secondary { @apply rounded px-3 py-2 text-gray-700 border border-gray-300 hover:bg-gray-100 active:bg-gray-200 transition-colors; }
+  .input-base    { @apply w-full rounded border border-gray-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500; }
 }

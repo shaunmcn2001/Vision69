@@ -1,5 +1,8 @@
-// Initialize a simple Leaflet map
-var map = L.map('map').setView([-23.5, 143.0], 5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+import maplibregl from 'maplibre-gl';
+
+const map = new maplibregl.Map({
+  container: 'map',
+  style: 'https://demotiles.maplibre.org/style.json',
+  center: [143.0, -23.5],
+  zoom: 5,
+});

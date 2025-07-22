@@ -1,19 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
-import ParcelMap from './ParcelMap.jsx';
+import Map from './Map.jsx';
 import SearchPanel from './SearchPanel.jsx';
+import NavBar from './NavBar.jsx';
 import { API_BASE } from './api.js';
-import './App.css';                       // global dark theme
+import './index.css';
 
 export default function App() {
-  /* ───── parcels & styling state ───── */
   const [features, setFeatures] = useState([]);
-  const [selected, setSelected]   = useState({});
-  const defaultStyle = {
-    fill: '#FF0000',
-    outline: '#FFFFFF',
-    opacity: 0.5,
-    weight: 2,
-  };
+  const [selected, setSelected] = useState({});
+  const defaultStyle = { fill: '#FF0000', outline: '#FFFFFF', opacity: 0.5, weight: 2 };
   const [style, setStyle] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('parcelStyle')) || defaultStyle;
@@ -25,13 +20,10 @@ export default function App() {
     localStorage.setItem('parcelStyle', JSON.stringify(style));
   }, [style]);
 
-  /* ───── sidebar open / closed ───── */
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const toggleSidebar = () => setSidebarOpen((o) => !o);
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const toggleDrawer = () => setDrawerOpen((o) => !o);
 
-  /* ───── helpers ───── */
-  const toggleRow = (idx) =>
-    setSelected((s) => ({ ...s, [idx]: !s[idx] }));
+  const toggleRow = (idx) => setSelected((s) => ({ ...s, [idx]: !s[idx] }));
 
   const handleResults = (list) => {
     setFeatures(list);
@@ -60,32 +52,24 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  /* ───── UI ───── */
   return (
-    <div className={`app ${sidebarOpen ? '' : 'sidebar-closed'}`}>
-      {/* toggle button – hide when sidebar is open */}
-      {!sidebarOpen && (
-        <button className="toggle-btn" onClick={toggleSidebar} title="Search">
-          🔍
-        </button>
-      )}
-
-      {/* sidebar (hidden when closed) */}
-      {sidebarOpen && (
-        <SearchPanel
-          onResults={handleResults}
-          features={features}
-          selected={selected}
-          toggle={toggleRow}
-          download={download}
-          style={style}
-          setStyle={setStyle}
-          onClose={toggleSidebar}
-        />
-      )}
-
-      {/* map */}
-      <ParcelMap features={features} style={style} />
+    <div className="flex flex-col h-full">
+      <NavBar onToggle={toggleDrawer} />
+      <div className="flex flex-1 overflow-hidden">
+        <Map features={features} style={style} onFeatureClick={toggleRow} />
+        {drawerOpen && (
+          <SearchPanel
+            onResults={handleResults}
+            features={features}
+            selected={selected}
+            toggle={toggleRow}
+            download={download}
+            style={style}
+            setStyle={setStyle}
+            onClose={toggleDrawer}
+          />
+        )}
+      </div>
     </div>
   );
 }

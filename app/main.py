@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 from typing import List
 
 import httpx
@@ -15,6 +16,11 @@ from .constants import NSW_PARCEL_URL, QLD_PARCEL_URL
 from .utils import parse_user_input
 from kml_utils import generate_kml, generate_shapefile
 
+# Determine absolute paths so the app works regardless of the working directory
+BASE_DIR = Path(__file__).resolve().parent.parent
+DIST_DIR = BASE_DIR / "frontend" / "dist"
+STATIC_DIR = BASE_DIR / "static"
+
 app = FastAPI(title="Vision Parcel API")
 
 # ── CORS ─────────────────────────────────────────────────────────
@@ -27,13 +33,13 @@ app.add_middleware(
 )
 
 # ── static SPA ───────────────────────────────────────────────────
-app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="assets")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/")
 async def serve_spa() -> FileResponse:
-    return FileResponse("frontend/dist/index.html")
+    return FileResponse(DIST_DIR / "index.html")
 
 
 @app.get("/ping")

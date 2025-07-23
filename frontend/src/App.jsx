@@ -1,6 +1,6 @@
-import MapView from './components/MapView';
+import Layout from './components/Layout.jsx';
 import './index.css';
 
 export default function App() {
-  return <MapView />;
+  return <Layout />;
 }

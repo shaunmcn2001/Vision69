@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { API_BASE } from '../api';
 
 export default function MapView() {
   const mapRef = useRef(null);
@@ -17,7 +18,7 @@ export default function MapView() {
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
     map.on('load', () => {
-      fetch('/api/parcels')
+      fetch(`${API_BASE}/api/parcels`)
         .then((r) => r.json())
         .then((data) => {
           if (!map.getSource('parcels')) {

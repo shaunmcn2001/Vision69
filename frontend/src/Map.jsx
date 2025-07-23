@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import maplibregl from 'maplibre-gl';
 
-export default function Map({ features, style, onFeatureClick }) {
+export default function Map({ features = [], style = {}, onFeatureClick, sidebarOpen, searchOpen }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
 
@@ -97,8 +97,16 @@ export default function Map({ features, style, onFeatureClick }) {
     map.setPaintProperty('parcels-line', 'line-width', style.weight);
   }, [style]);
 
+  useEffect(() => {
+    if (!mapRef.current) return;
+    mapRef.current.resize();
+  }, [sidebarOpen, searchOpen]);
+
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+    <div
+      ref={containerRef}
+      className="w-full h-full"
+    />
   );
 }
 

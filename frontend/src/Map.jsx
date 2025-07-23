@@ -97,7 +97,9 @@ export default function Map({ features, style, onFeatureClick }) {
     map.setPaintProperty('parcels-line', 'line-width', style.weight);
   }, [style]);
 
-  return <div ref={containerRef} className="maplibre-container flex-1" />;
+  return (
+    <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+  );
 }
 
 function computeBbox(features) {

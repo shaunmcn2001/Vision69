@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import MapView from './MapView';
+import Sidebar from './Sidebar';
 import { API_BASE } from '../api';
 
 export default function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bulk, setBulk] = useState('');
   const [results, setResults] = useState([]);
   const [error, setError] = useState('');
@@ -60,45 +61,33 @@ export default function Layout() {
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } fixed md:static z-30 w-64 bg-gray-50 dark:bg-gray-800 transition-transform duration-300 flex-shrink-0`}
-      >
-        <div className="h-12 flex items-center px-4 text-lg font-semibold border-b border-gray-200 dark:border-gray-700">
-          Vision
-        </div>
-        <nav className="p-4 space-y-2">
-          <button className="w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" onClick={handleSearch}>
-            Search Parcels
-          </button>
-          <button className="w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" onClick={handleDownload}>
-            Export to KML
-          </button>
-          <button className="w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" onClick={() => setResults([])}>
-            Reset Map
-          </button>
-        </nav>
-      </aside>
+      <Sidebar
+        open={sidebarOpen}
+        handleSearch={handleSearch}
+        handleDownload={handleDownload}
+        resetMap={() => setResults([])}
+      />
 
       {/* Main area */}
-      <div className="flex flex-col flex-1 ml-0 md:ml-64">
+      <div className="flex flex-col flex-1 p-4 sm:ml-64">
         {/* Navbar */}
         <nav className="h-12 bg-gray-800 text-white flex items-center px-4 justify-between">
           <div className="flex items-center space-x-2">
             <button
-              className="p-2 rounded-md hover:bg-gray-700 md:hidden"
+              type="button"
+              className="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
               onClick={toggleSidebar}
-              aria-label="Toggle sidebar"
+              aria-controls="logo-sidebar"
             >
+              <span className="sr-only">Open sidebar</span>
               <svg
                 className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                fill="currentColor"
+                viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z" />
               </svg>
             </button>
             <span className="font-semibold">Vision</span>
@@ -106,7 +95,7 @@ export default function Layout() {
           <div></div>
         </nav>
 
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
           {/* Search and results */}
           <div className="md:w-80 p-4 space-y-4 overflow-y-auto bg-white dark:bg-gray-900">
             <textarea

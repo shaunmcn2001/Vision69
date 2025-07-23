@@ -1,6 +1,6 @@
 import logo from '../assets/logo.svg?url';
 
-export default function Sidebar({ open, handleSearch, handleDownload, resetMap }) {
+export default function Sidebar({ open, openSearch, download, resetMap }) {
   return (
     <aside
       id="logo-sidebar"
@@ -15,7 +15,7 @@ export default function Sidebar({ open, handleSearch, handleDownload, resetMap }
         <ul className="space-y-2 font-medium">
           <li>
             <button
-              onClick={handleSearch}
+              onClick={openSearch}
               className="flex items-center w-full p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
             >
               <svg
@@ -33,7 +33,7 @@ export default function Sidebar({ open, handleSearch, handleDownload, resetMap }
           </li>
           <li>
             <button
-              onClick={handleDownload}
+              onClick={download}
               className="flex items-center w-full p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
             >
               <svg

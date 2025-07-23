@@ -27,3 +27,13 @@ body {
     @apply bg-gray-700 text-white border border-gray-500 rounded px-2 py-1;
   }
 }
+
+/* Remove hard-coded 100 % height – we now use flex layout */
+.maplibre-container {
+  @apply w-full h-full;
+}
+
+/* Scrollable results table inside SearchPanel */
+.results-scroll {
+  @apply max-h-[300px] overflow-y-auto;
+}

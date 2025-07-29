@@ -4,16 +4,35 @@
 html, body, #root {
   height: 100%;
 }
+
 body {
   margin: 0;
 }
+
 #root {
   display: flex;
   flex-direction: column;
 }
-.maplibre-container {
+
+/* The mapbox container must occupy all available space to render properly. */
+.mapbox-container {
   height: 100%;
   width: 100%;
+  position: relative;
+}
+
+/* Simple styling for the measurement read‑out displayed on top of the map. */
+.measure-output {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #000;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+  pointer-events: none;
 }
 
 @layer components {
@@ -26,14 +45,4 @@ body {
   .input-base {
     @apply bg-gray-700 text-white border border-gray-500 rounded px-2 py-1;
   }
-}
-
-/* Remove hard-coded 100 % height – we now use flex layout */
-.maplibre-container {
-  @apply w-full h-full;
-}
-
-/* Scrollable results table inside SearchPanel */
-.results-scroll {
-  @apply max-h-[300px] overflow-y-auto;
 }

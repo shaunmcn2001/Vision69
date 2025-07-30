@@ -1,50 +1,21 @@
 @import "tailwindcss";
 @import "flowbite";
 
-/* Fill the viewport */
+/* Full-viewport app */
 html, body, #root { height: 100%; }
 body { margin: 0; }
 
-/* Map wrapper rules */
+/* Map wrapper */
 .map-area { position: relative; width: 100%; height: 100%; }
 
-/* Utility (optional) */
+/* Simple "glass" panels for overlays if desired */
+.glass {
+  background: rgba(17, 24, 39, 0.85); /* gray-900 / 85% */
+  backdrop-filter: saturate(150%) blur(6px);
+  border: 1px solid rgba(75, 85, 99, 0.5); /* gray-600/50 */
+}
+
+/* Utility for right panel shadow */
+.panel-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.35); }
+
 :root { color-scheme: dark; }
-
-#root {
-  display: flex;
-  flex-direction: column;
-}
-
-/* The mapbox container must occupy all available space to render properly. */
-.mapbox-container {
-  height: 100%;
-  width: 100%;
-  position: relative;
-}
-
-/* Simple styling for the measurement read‑out displayed on top of the map. */
-.measure-output {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  margin: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: #000;
-  font-size: 0.875rem;
-  border-radius: 0.25rem;
-  pointer-events: none;
-}
-
-@layer components {
-  .btn-primary {
-    @apply bg-blue-600 text-white rounded px-3 py-1 hover:bg-blue-700;
-  }
-  .btn-secondary {
-    @apply bg-gray-600 text-white rounded px-3 py-1 hover:bg-gray-700;
-  }
-  .input-base {
-    @apply bg-gray-700 text-white border border-gray-500 rounded px-2 py-1;
-  }
-}
